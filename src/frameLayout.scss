@@ -9,7 +9,7 @@
     line-height: 64px;
     padding-left: (80px - 32px) / 2;
     transition: all 0.3s;
-    background: #002140;
+    // background: #404040;
     overflow: hidden;
     img {
       display: inline-block;
@@ -20,10 +20,10 @@
       color: white;
       display: inline-block;
       vertical-align: middle;
-      font-size: 20px;
+      font-size: 22px;
       margin: 0 0 0 12px;
       font-family: 'Myriad Pro', 'Helvetica Neue', Arial, Helvetica, sans-serif;
-      // font-weight: 600;
+      font-weight: 400;
     }
   }
 
@@ -32,7 +32,7 @@
     position: relative;
     line-height: 64px;
     transition: all 0.3s;
-    background: #404040;
+    // background: #404040;
     overflow: hidden;
     text-align: center;
     .app-name{
@@ -43,7 +43,7 @@
       line-height: 40px;
       border-radius: 5px;
       color: white;
-      font-size: 18px;
+      font-size: 20px;
     }
     
   }

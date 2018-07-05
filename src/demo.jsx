@@ -30,9 +30,11 @@ export default () => {
 
     <FrameLayout
       apiDomain='http://172.18.11.112:11001'
-      // logo="https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
+      logo="https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
       appName="ITIL"
-      mode="sider"
+      menus={JSON.parse(localStorage.getItem('MENU_INFO')).data}
+      apps={JSON.parse(localStorage.getItem('apps')).data}
+      userName={JSON.parse(localStorage.getItem('cname')).data}
     >
       <div style={{ height: 1200, width: '100%' }}>
         <Switch>

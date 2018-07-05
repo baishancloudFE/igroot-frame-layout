@@ -1,5 +1,5 @@
 import React from 'react'
-import { Layout, Menu, Icon, Popconfirm, Dropdown, Button, Avatar } from 'igroot'
+import { Layout, Menu, Icon, Popconfirm, Button, Row, Col, Popover, Input } from 'igroot'
 import { Router, Link } from 'react-router-dom'
 import createHashHistory from 'history/createHashHistory'
 import PropTypes from 'prop-types'
@@ -30,6 +30,8 @@ export default class FrameLayout extends React.Component {
       selectedKeys: [],
       openKeys: [],
       collapsed: false,
+      displaySearchApp: false,
+      inputSearchValue: ''
     }
   }
 
@@ -44,10 +46,11 @@ export default class FrameLayout extends React.Component {
   }
 
   // 获取导航所需的平台链接数据
-  getAppLinks = () => {
+  getAppLinks = (value = "") => {
     const { apps } = this.props
-    const res = apps || getLocalStorage('apps')
-    return res.authed
+    const allApps = (apps || getLocalStorage('apps')).authed
+
+    return allApps.filter(item => item.cname.indexOf(value) >= 0)
   }
 
   // 获取用户名数据
@@ -58,9 +61,23 @@ export default class FrameLayout extends React.Component {
     return res
   }
 
+  // 获得去除参数信息后的菜单对象（例如：/a/b/:id）
+  getRouteWithNoNumber = () => {
+    const { location: { hash } } = window
+
+    const routeItems = hash.split('/')
+    const newRouteItems = routeItems.filter(item => isNaN(item) && item !== '#')
+
+    let route = '/' + newRouteItems.join('/')
+
+    return route
+  }
+
   componentWillMount() {
     this.log('componentWillMount')
     const menus = this.getMenu()
+    this.log('menus', menus)
+
     this.historyListen(menus)
 
     const initialRoute = getLocalStorage('currentRoute')
@@ -69,9 +86,8 @@ export default class FrameLayout extends React.Component {
       localStorage.removeItem('currentRoute')
     }
 
-    let route   // 初始得到的路由信息
-    const { location: { hash } } = window
-    route = hash.replace('#', "")
+    // 初始得到的路由信息
+    let route = this.getRouteWithNoNumber()
 
     this.log('初始route', route)
 
@@ -94,58 +110,35 @@ export default class FrameLayout extends React.Component {
       }// 如果不存在说明用户输入的路径有误，或者没有权限，则进入平台自定义的404路由
     }
 
-    // window.location.hash = selectedMenu.to
-    if (selectedMenu.to !== route) {
-      hashHistory.push(selectedMenu.to)
+    // 如果页面初始化时的浏览器路径可以找到
+    if (selectedMenu) {
+      // window.location.hash = selectedMenu.to
+      if (selectedMenu.to !== route) {
+        hashHistory.push(selectedMenu.to)
+      }
+
+      document.title = selectedMenu.name
+      this.setState({
+        openKeys: [openKey],
+        selectedKeys: [selectedMenu.key]
+      })
     }
-
-    document.title = selectedMenu.name
-    this.setState({
-      openKeys: [openKey],
-      selectedKeys: [selectedMenu.key]
-    })
-
-
   }
 
   render() {
     const { selectedKeys, collapsed, openKeys } = this.state
-    const { apiDomain, logo, appName, mode, needFooter, contactors } = this.props
-    const menus = this.getMenu()
+    const { mode } = this.props
     this.log('openKeys', openKeys, 'selectedKeys', selectedKeys)
-
-    const applinks =
-      (
-        <Menu style={{ maxHeight: 400, overflow: 'auto' }}>
-          {
-            this.getAppLinks().map(app => (
-              <Menu.Item key={app.cname}>
-                <a target="_blank" rel="noopener noreferrer" href={app.appUrl}>{app.cname}</a>
-              </Menu.Item>
-            ))
-          }
-        </Menu>
-      );
 
     const siderHeaderContainer = (
       <Layout style={{ height: '100%' }} id='container-page'>
+
         <Sider
           id="sider"
           trigger={null}
           collapsible
           collapsed={collapsed}>
-          {
-            logo ? (
-              <div className="logo">
-                <img src={logo} alt="logo" />
-                <h1>{appName}</h1>
-              </div>
-            ) : (
-                <div className="logo-only-name">
-                  <div className="app-name">{appName}</div>
-                </div>
-              )
-          }
+          {this.renderLogo()}
           <Menu
             theme='dark'
             mode='inline'
@@ -154,12 +147,12 @@ export default class FrameLayout extends React.Component {
             selectedKeys={selectedKeys}
             style={{ width: '100%' }}
           >
-            {
-              this.renderMenu(menus)
-            }
+            {this.renderMenu()}
           </Menu>
         </Sider>
+
         <Layout>
+
           <Header className='header'>
             <Icon
               className="trigger"
@@ -174,54 +167,19 @@ export default class FrameLayout extends React.Component {
               marginRight: 15,
               fontSize: 16
             }}>
-
-              <Dropdown overlay={applinks}>
-                <Button style={{ marginRight: 12 }} >
-                  友情链接 <Icon type="down" />
-                </Button>
-              </Dropdown>
-
-              {
-                contactors ?
-                  <Popconfirm
-                    title={
-                      <div>
-                        <p>以下是开发人员的联系方式</p>
-                        {
-                          contactors.map(item => (
-                            <div style={{ marginTop: 12 }} key={item.name}>
-                              <Icon type="user" style={{ marginRight: 6 }} />{item.name}
-                              <div style={{ paddingLeft: 12 }}>
-                                <Icon type="phone" style={{ marginRight: 6 }} />{item.phone}
-                              </div>
-                              <a style={{ paddingLeft: 12 }} onClick={() => { window.open(`tencent://message/?uin=${2923218206}&Site=JooIT.com&Menu=yes`) }}>
-                                {/* <img style={{ width: 12, height: 12, marginRight: 6 }} src='./static/qq.png' />{item.qq} */}
-                                qq   {item.qq}
-                              </a>
-                            </div>
-                          ))
-                        }
-                      </div>
-                    }
-                    okText="朕已阅">
-                    <Button icon="phone" style={{ marginRight: 12 }} >联系我们</Button>
-                  </Popconfirm> : null
-              }
-
-
-              <Button icon="arrows-alt" style={{ marginRight: 32 }} onClick={toggleFullScreen}>全屏</Button>
-              <span style={{ marginRight: 12 }}>{this.getUserName() || '未登录'}</span>
-              <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)}>
-                <Icon type='logout' style={{ display: localStorage.getItem('cname') ? 'inline-block' : 'none' }} />
-              </Popconfirm>
+              {this.renderAppLink()}
+              {this.renderContactors()}
+              {this.renderFullScreen()}
+              {this.renderLogout()}
             </span>
           </Header>
+
           <Content style={{ margin: '12px 12px 0', height: '100%' }}>
             {this.props.children}
           </Content>
-          {
-            needFooter ? <Footer style={{ textAlign: 'center' }}> Copyright © 2018 白山云科技</Footer> : null
-          }
+
+          {this.renderFooter()}
+
         </Layout>
       </Layout>
     )
@@ -232,31 +190,12 @@ export default class FrameLayout extends React.Component {
           collapsible
           collapsed={collapsed}
           onCollapse={this.onCollapse}>
-          {
-            logo ? (
-              <div className="logo">
-                <img src={logo} alt="logo" />
-                <h1>{appName}</h1>
-              </div>
-            ) : (
-                <div className="logo-only-name">
-                  <div className="app-name">{appName}</div>
-                </div>
-              )
-          }
+          {this.renderLogo()}
           <div className="sider-user-area">
-            <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)}>
-              <Avatar className="sider-avatar" shape="square" icon="user" style={{ marginRight: 12 }} />
-            </Popconfirm>
+            {this.renderLogout()}
             <span className="sider-user-name">
-              <span style={{ marginRight: 12, fontSize: 14 }}>{this.getUserName() || '未登录'}</span>
-              <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)}>
-                <Icon type='logout' style={{ display: localStorage.getItem('cname') ? 'inline-block' : 'none' }} />
-              </Popconfirm>
-
-              <Dropdown overlay={applinks}>
-                <Icon type="link" style={{ marginLeft: 22, fontSize: 14 }} />
-              </Dropdown>
+              {this.renderLogout()}
+              {this.renderAppLink()}
             </span>
           </div>
           <Menu
@@ -267,36 +206,23 @@ export default class FrameLayout extends React.Component {
             selectedKeys={selectedKeys}
             style={{ width: '100%' }}
           >
-            {
-              this.renderMenu(menus)
-            }
+            {this.renderMenu()}
           </Menu>
         </Sider>
+
         <Layout>
           <Content style={{ margin: '12px 12px 0', height: '100%' }}>
             {this.props.children}
           </Content>
-          {
-            needFooter ? <Footer style={{ textAlign: 'center' }}> Copyright © 2018 白山云科技</Footer> : null
-          }
+          {this.renderFooter()}
         </Layout>
+
       </Layout>
     )
     const headerContainer = (
       <Layout style={{ height: '100%' }} id='header-page'>
         <Header>
-          {
-            logo ? (
-              <span className="logo">
-                <img src={logo} alt="logo" />
-                <h1>{appName}</h1>
-              </span>
-            ) : (
-                <span className="logo-only-name">
-                  <span className="app-name">{appName}</span>
-                </span>
-              )
-          }
+          {this.renderLogo()}
           <Menu
             theme='dark'
             mode='horizontal'
@@ -304,9 +230,7 @@ export default class FrameLayout extends React.Component {
             onOpenChange={this.handleOpenChange}
             selectedKeys={selectedKeys}
           >
-            {
-              this.renderMenu(menus)
-            }
+            {this.renderMenu()}
           </Menu>
           <span style={{
             display: 'inline-block',
@@ -316,23 +240,14 @@ export default class FrameLayout extends React.Component {
             fontSize: 16,
             color: '#fff'
           }}>
-            <Dropdown overlay={applinks}>
-              <Icon type="link" style={{ marginRight: 0 }} />
-            </Dropdown>
-
-            <span style={{ marginRight: 12 }}>{this.getUserName() || '未登录'}</span>
-            <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)}>
-              <Icon type='logout' style={{ display: localStorage.getItem('cname') ? 'inline-block' : 'none' }} />
-            </Popconfirm>
-
+            {this.renderAppLink()}
+            {this.renderLogout()}
           </span>
         </Header>
         <Content style={{ margin: '12px 12px 0', height: '100%' }}>
           {this.props.children}
         </Content>
-        {
-          needFooter ? <Footer style={{ textAlign: 'center' }}> Copyright © 2018 白山云科技</Footer> : null
-        }
+        {this.renderFooter()}
       </Layout >
     )
     return (
@@ -378,7 +293,8 @@ export default class FrameLayout extends React.Component {
   }
 
   // 渲染菜单
-  renderMenu = (menus = []) => {
+  renderMenu = () => {
+    const menus = this.getMenu()
     return menus.map(item => {
       if (!item.subs)
         return (
@@ -414,6 +330,169 @@ export default class FrameLayout extends React.Component {
     })
   }
 
+  // 显示搜索平台的搜索框
+  showSearch = () => {
+    this.setState({ displaySearchApp: true })
+  }
+
+  // 设置平台的过滤值
+  searchApps = (e) => {
+    this.setState({ inputSearchValue: e.target.value })
+  }
+
+  handleInputConfirm = () => {
+    this.setState({
+      displaySearchApp: false,
+    });
+  }
+
+  renderFullScreen = () => {
+    const { needFullScreen } = this.props
+    return (
+      needFullScreen ? <Button icon="arrows-alt" style={{ marginRight: 32 }} onClick={toggleFullScreen}>全屏</Button> : null
+    )
+  }
+  // 渲染 平台导航 部分
+  renderAppLink = () => {
+    const { mode, needAppLink } = this.props
+    const { displaySearchApp, inputSearchValue } = this.state
+
+    const title = (
+      <div>
+        平台导航
+        <span style={{ marginLeft: 8 }}>
+          {
+            displaySearchApp ?
+              <Input.Search
+                size="small"
+                placeholder="我要去..."
+                defaultValue={inputSearchValue}
+                style={{ width: 200 }}
+                onChange={this.searchApps}
+                onBlur={this.handleInputConfirm}
+                onPressEnter={this.handleInputConfirm}
+              />
+              : <Icon type="search" onClick={this.showSearch} />
+          }
+        </span>
+      </div>
+    )
+    const content = (
+      <Row>
+        {
+          this.getAppLinks(inputSearchValue).map(app => (
+            <Col span={6} key={app.cname} style={{ padding: 6 }}>
+              <a target="_blank" rel="noopener noreferrer" href={app.appUrl}>{app.cname}</a>
+            </Col>
+          ))
+        }
+      </Row>
+    )
+
+    let placement
+    let handleArea = <Button style={{ marginRight: 12 }} icon="link">平台导航</Button>
+    switch (mode) {
+      case 'sider+header':
+        placement = "bottomLeft"
+        break
+      case 'header':
+        placement = "bottomLeft"
+        handleArea = <Icon type="link" style={{ marginLeft: 12, fontSize: 14 }} />
+        break
+      case 'sider':
+        placement = "rightTop"
+        handleArea = <Icon type="link" style={{ marginLeft: 22, fontSize: 14 }} />
+        break
+      default:
+        placement = "bottomLeft"
+        break
+    }
+
+    return (
+      needAppLink ?
+        <Popover
+          placement={placement}
+          title={title}
+          content={content}
+          trigger="hover"
+          autoAdjustOverflow
+          overlayStyle={{ width: 700 }}>
+          {handleArea}
+        </Popover> : null
+    )
+  }
+
+  // 渲染页脚
+  renderFooter = () => {
+    const { needFooter } = this.props
+    const year = (new Date()).getFullYear()
+    return (
+      needFooter ? <Footer style={{ textAlign: 'center' }}> Copyright © {year} 白山云科技</Footer> : null
+    )
+  }
+
+  // 渲染 登出 部分
+  renderLogout = () => {
+    const { apiDomain } = this.props
+    return (
+      <span>
+        <span style={{ marginRight: 12 }}>{this.getUserName() || '未登录'}</span>
+        <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)} placement="bottom">
+          <Icon type='logout' style={{ display: localStorage.getItem('cname') ? 'inline-block' : 'none' }} />
+        </Popconfirm>
+      </span>
+
+    )
+  }
+
+  // 渲染 联系人 部分
+  renderContactors = () => {
+    const { contactors } = this.props
+    return (
+      contactors ?
+        <Popconfirm
+          title={
+            <div>
+              <p>以下是开发人员的联系方式</p>
+              {
+                contactors.map(item => (
+                  <div style={{ marginTop: 12 }} key={item.name}>
+                    <Icon type="user" style={{ marginRight: 6 }} />{item.name}
+                    <div style={{ paddingLeft: 12 }}>
+                      <Icon type="phone" style={{ marginRight: 6 }} />{item.phone}
+                    </div>
+                    <a style={{ paddingLeft: 12 }} onClick={() => { window.open(`tencent://message/?uin=${2923218206}&Site=JooIT.com&Menu=yes`) }}>
+                      qq   {item.qq}
+                    </a>
+                  </div>
+                ))
+              }
+            </div>
+          }
+          okText="朕已阅">
+          <Button icon="phone" style={{ marginRight: 12 }} >联系我们</Button>
+        </Popconfirm> : null
+    )
+  }
+
+  // 渲染 Logo 布局
+  renderLogo = () => {
+    const { logo, appName } = this.props
+    return (
+      logo ? (
+        <div className="logo">
+          <img src={logo} alt="logo" />
+          <h1>{appName}</h1>
+        </div>
+      ) : (
+          <div className="logo-only-name">
+            <div className="app-name">{appName}</div>
+          </div>
+        )
+    )
+  }
+
+  // TODO：收缩后点击别的父级菜单下的菜单，展开后还是原来的，要更新！！！
   onCollapse = () => {
     const collapsed = !this.state.collapsed
 
@@ -458,7 +537,7 @@ export default class FrameLayout extends React.Component {
     return res[0]
   }
 
-  // 根据路径名过滤出菜单
+  // 根据 路径名过滤出菜单
   searchMenuByPath = (allMenus, pathname) => {
     let res
     allMenus.forEach(menu => {
@@ -512,6 +591,8 @@ FrameLayout.propTypes = {
   appName: PropTypes.string.isRequired,             // 平台名称
   mode: PropTypes.string,                           // 菜单模式：sider+header;sider;header
   needFooter: PropTypes.bool,                       // 是否需要页脚
+  needAppLink: PropTypes.bool,                      // 是否需要平台导航
+  needFullScreen: PropTypes.bool,                   // 是否需要全屏按钮
   menus: PropTypes.array,                           // 自定义菜单数据
   apps: PropTypes.object,                           // 自定义菜单数据
   contactors: PropTypes.array,                      // 自定义联系人数据
@@ -521,6 +602,8 @@ FrameLayout.propTypes = {
 FrameLayout.defaultProps = {
   mode: 'sider+header',
   needFooter: true,
+  needAppLink: true,
+  needFullScreen: true,
   onLogout: function (domain) {
     window.localStorage.clear()
     window.location.assign(domain + '/account/user/logout');
