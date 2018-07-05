@@ -10,19 +10,6 @@ const { SubMenu, Item } = Menu
 const { Header, Content, Sider, Footer } = Layout
 const hashHistory = createHashHistory()
 
-// const contactors = [
-//   {
-//     name: '王远洋',
-//     phone: '18150163382',
-//     qq: '383881952'
-//   },
-//   {
-//     name: '范溢贞',
-//     phone: '18106987196',
-//     qq: '614235948'
-//   }
-// ]
-
 export default class FrameLayout extends React.Component {
   constructor(props) {
     super(props)
@@ -95,7 +82,6 @@ export default class FrameLayout extends React.Component {
     let selectedMenu, openKey
     // 默认路径如果为／，则设置第一个叶子菜单为默认路由
     if (!route || route === '/') {
-
       const firstChildMenu = this.getFlatMenus(menus[0])[0]
       this.log('初始route为空，找到的menu是', firstChildMenu)
       openKey = menus[0].key
@@ -112,7 +98,6 @@ export default class FrameLayout extends React.Component {
 
     // 如果页面初始化时的浏览器路径可以找到
     if (selectedMenu) {
-      // window.location.hash = selectedMenu.to
       if (selectedMenu.to !== route) {
         hashHistory.push(selectedMenu.to)
       }
@@ -380,8 +365,8 @@ export default class FrameLayout extends React.Component {
     const content = (
       <Row>
         {
-          this.getAppLinks(inputSearchValue).map(app => (
-            <Col span={6} key={app.cname} style={{ padding: 6 }}>
+          this.getAppLinks(inputSearchValue).map((app, index) => (
+            <Col span={6} key={app.cname + index} style={{ padding: 6 }}>
               <a target="_blank" rel="noopener noreferrer" href={app.appUrl}>{app.cname}</a>
             </Col>
           ))
@@ -589,15 +574,16 @@ FrameLayout.propTypes = {
   apiDomain: PropTypes.string.isRequired,           // 接口请求地址,用于登出操作
   logo: PropTypes.string,                           // logo路径
   appName: PropTypes.string.isRequired,             // 平台名称
-  mode: PropTypes.string,                           // 菜单模式：sider+header;sider;header
+  mode: PropTypes.string,                           // 三种可选的菜单模式：sider+header;sider;header
   needFooter: PropTypes.bool,                       // 是否需要页脚
   needAppLink: PropTypes.bool,                      // 是否需要平台导航
   needFullScreen: PropTypes.bool,                   // 是否需要全屏按钮
   menus: PropTypes.array,                           // 自定义菜单数据
   apps: PropTypes.object,                           // 自定义菜单数据
+  userName: PropTypes.string,                       // 自定义用户名数据
   contactors: PropTypes.array,                      // 自定义联系人数据
   onLogout: PropTypes.func,                         // 处理登出逻辑
-  userName: PropTypes.string,                       // 自定义用户名数据
+  routerFree: PropTypes.bool,                       // 布局组件 是否需要 包办Router这一层
 }
 FrameLayout.defaultProps = {
   mode: 'sider+header',
