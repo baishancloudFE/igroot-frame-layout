@@ -131,7 +131,7 @@ export default class FrameLayout extends React.Component {
     this.log('openKeys', openKeys, 'selectedKeys', selectedKeys)
 
     const siderHeaderContainer = (
-      <Layout style={{ height: '100%' }} id='container-page'>
+      <Layout style={{ height: '100%' }} id='frame-container-page'>
 
         <Sider
           id="sider"
@@ -184,7 +184,7 @@ export default class FrameLayout extends React.Component {
       </Layout>
     )
     const siderContainer = (
-      <Layout style={{ height: '100%' }} id='container-page'>
+      <Layout style={{ height: '100%' }} id='frame-container-page'>
         <Sider
           id="sider"
           collapsible
