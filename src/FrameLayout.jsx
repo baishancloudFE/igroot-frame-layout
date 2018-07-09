@@ -1,5 +1,5 @@
 import React from 'react'
-import { Layout, Menu, Icon, Popconfirm, Button, Row, Col, Popover, Input } from 'igroot'
+import { Layout, Menu, Icon, Popconfirm, Button, Row, Col, Popover, Input, Avatar } from 'igroot'
 import { Router, Link } from 'react-router-dom'
 import createHashHistory from 'history/createHashHistory'
 import PropTypes from 'prop-types'
@@ -102,7 +102,7 @@ export default class FrameLayout extends React.Component {
         hashHistory.push(selectedMenu.to)
       }
 
-      document.title = selectedMenu.name
+      document.title = this.props.appName + '-' + selectedMenu.name
       this.setState({
         openKeys: [openKey],
         selectedKeys: [selectedMenu.key]
@@ -177,7 +177,6 @@ export default class FrameLayout extends React.Component {
           onCollapse={this.onCollapse}>
           {this.renderLogo()}
           <div className="sider-user-area">
-            {this.renderLogout()}
             <span className="sider-user-name">
               {this.renderLogout()}
               {this.renderAppLink()}
@@ -262,7 +261,7 @@ export default class FrameLayout extends React.Component {
         if (!!currentMenu) {
           let parentMenu = this.searchParentMenu(currentMenu, menus)
           this.log('parentMenu', parentMenu)
-          document.title = currentMenu.name
+          document.title = this.props.appName + '-' + currentMenu.name
           this.log(!!currentMenu && !!parentMenu && currentMenu.key !== this.state.selectedKeys[0])
           if (!!parentMenu && currentMenu.key !== this.state.selectedKeys[0]) {
 
