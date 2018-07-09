@@ -418,10 +418,20 @@ export default class FrameLayout extends React.Component {
 
   // 渲染 登出 部分
   renderLogout = () => {
-    const { apiDomain } = this.props
+    const { apiDomain, mode } = this.props
+
     return (
       <span>
+        {
+          mode === 'sider' ? (
+            <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)} placement="bottomRight">
+              <Avatar className="sider-avatar" shape="square" icon="user" style={{ marginRight: 12 }} />
+            </Popconfirm>
+          ) : null
+        }
+
         <span style={{ marginRight: 12 }}>{this.getUserName() || '未登录'}</span>
+
         <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)} placement="bottom">
           <Icon type='logout' style={{ display: localStorage.getItem('cname') ? 'inline-block' : 'none' }} />
         </Popconfirm>
