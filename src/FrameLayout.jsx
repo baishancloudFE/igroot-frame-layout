@@ -8,11 +8,13 @@ import './frameLayout.scss'
 
 const { SubMenu, Item } = Menu
 const { Header, Content, Sider, Footer } = Layout
-const hashHistory = createHashHistory()
 
 export default class FrameLayout extends React.Component {
   constructor(props) {
     super(props)
+
+    this.hashHistory = this.getHistory()
+
     this.state = {
       selectedKeys: [],
       openKeys: [],
@@ -20,6 +22,11 @@ export default class FrameLayout extends React.Component {
       displaySearchApp: false,
       inputSearchValue: ''
     }
+  }
+
+  getHistory = () => {
+    const { myHistory } = this.props
+    return myHistory || createHashHistory()
   }
 
   // 获取菜单数据
@@ -35,9 +42,14 @@ export default class FrameLayout extends React.Component {
   // 获取导航所需的平台链接数据
   getAppLinks = (value = "") => {
     const { apps } = this.props
-    const allApps = (apps || getLocalStorage('apps')).authed
+    const appObj = apps || getLocalStorage('apps')
 
-    return allApps.filter(item => item.cname.indexOf(value) >= 0)
+    let res = []
+    if (appObj) {
+      const allApps = (apps || getLocalStorage('apps')).authed
+      res = allApps.filter(item => item.cname.indexOf(value) >= 0)
+    }
+    return res
   }
 
   // 获取用户名数据
@@ -63,13 +75,14 @@ export default class FrameLayout extends React.Component {
   componentWillMount() {
     this.log('componentWillMount')
     const menus = this.getMenu()
+
     this.log('menus', menus)
 
     this.historyListen(menus)
 
     const initialRoute = getLocalStorage('currentRoute')
     if (initialRoute) {
-      hashHistory.push(initialRoute)
+      this.hashHistory.push(initialRoute)
       localStorage.removeItem('currentRoute')
     }
 
@@ -99,7 +112,7 @@ export default class FrameLayout extends React.Component {
     // 如果页面初始化时的浏览器路径可以找到
     if (selectedMenu) {
       if (selectedMenu.to !== route) {
-        hashHistory.push(selectedMenu.to)
+        this.hashHistory.push(selectedMenu.to)
       }
 
       document.title = this.props.appName + '-' + selectedMenu.name
@@ -112,7 +125,8 @@ export default class FrameLayout extends React.Component {
 
   render() {
     const { selectedKeys, collapsed, openKeys } = this.state
-    const { mode } = this.props
+    const { mode, myHistory } = this.props
+
     this.log('openKeys', openKeys, 'selectedKeys', selectedKeys)
 
     const siderHeaderContainer = (
@@ -235,12 +249,19 @@ export default class FrameLayout extends React.Component {
       </Layout >
     )
     return (
-      <Router history={hashHistory}>
-        {
+      myHistory ?
+        (
           mode === 'sider+header' ? siderHeaderContainer
             : (mode === 'sider' ? siderContainer : headerContainer)
-        }
-      </Router >
+        ) :
+        (
+          <Router history={this.hashHistory}>
+            {
+              mode === 'sider+header' ? siderHeaderContainer
+                : (mode === 'sider' ? siderContainer : headerContainer)
+            }
+          </Router >
+        )
     )
   }
 
@@ -253,7 +274,7 @@ export default class FrameLayout extends React.Component {
 
   // 监听浏览器地址栏变化，并联动菜单的选中状态
   historyListen = (menus) => {
-    hashHistory.listen((location) => {
+    this.hashHistory.listen((location) => {
       this.log('hashHistory.listen', location.pathname)
       if (location.pathname !== '/') {
         let currentMenu = this.searchMenuByPath(menus, location.pathname)
@@ -338,9 +359,14 @@ export default class FrameLayout extends React.Component {
   }
   // 渲染 平台导航 部分
   renderAppLink = () => {
-    const { mode, needAppLink } = this.props
-    const { displaySearchApp, inputSearchValue } = this.state
+    const { mode } = this.props
 
+    const apps = this.getAppLinks(inputSearchValue)
+
+    if (apps.length === 0)
+      return null
+
+    const { displaySearchApp, inputSearchValue } = this.state
     const title = (
       <div>
         平台导航
@@ -361,16 +387,20 @@ export default class FrameLayout extends React.Component {
         </span>
       </div>
     )
+
     const content = (
-      <Row>
-        {
-          this.getAppLinks(inputSearchValue).map((app, index) => (
-            <Col span={6} key={app.cname + index} style={{ padding: 6 }}>
-              <a target="_blank" rel="noopener noreferrer" href={app.appUrl}>{app.cname}</a>
-            </Col>
-          ))
-        }
-      </Row>
+      apps.length > 0 ?
+        (
+          <Row>
+            {
+              apps.map((app, index) => (
+                <Col span={6} key={app.cname + index} style={{ padding: 6 }}>
+                  <a target="_blank" rel="noopener noreferrer" href={app.appUrl}>{app.cname}</a>
+                </Col>
+              ))
+            }
+          </Row>
+        ) : null
     )
 
     let placement
@@ -393,16 +423,15 @@ export default class FrameLayout extends React.Component {
     }
 
     return (
-      needAppLink ?
-        <Popover
-          placement={placement}
-          title={title}
-          content={content}
-          trigger="hover"
-          autoAdjustOverflow
-          overlayStyle={{ width: 700 }}>
-          {handleArea}
-        </Popover> : null
+      <Popover
+        placement={placement}
+        title={title}
+        content={content}
+        trigger="hover"
+        autoAdjustOverflow
+        overlayStyle={{ width: 700 }}>
+        {handleArea}
+      </Popover>
     )
   }
 
@@ -592,7 +621,7 @@ FrameLayout.propTypes = {
   userName: PropTypes.string,                       // 自定义用户名数据
   contactors: PropTypes.array,                      // 自定义联系人数据
   onLogout: PropTypes.func,                         // 处理登出逻辑
-  routerFree: PropTypes.bool,                       // 布局组件 是否需要 包办Router这一层
+  myHistory: PropTypes.object,                      // 自定义 history 对象
 }
 FrameLayout.defaultProps = {
   mode: 'sider+header',
@@ -602,5 +631,5 @@ FrameLayout.defaultProps = {
   onLogout: function (domain) {
     window.localStorage.clear()
     window.location.assign(domain + '/account/user/logout');
-  }
+  },
 }

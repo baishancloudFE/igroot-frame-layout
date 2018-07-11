@@ -29,3 +29,11 @@
 # 0.0.18
 > 2018.07.09
 > - 💄 浏览器title前加上平台名
+
+# 0.1.0
+> 2018.07.11
+> - 💄 加入routerFree和myHistory两个参数，支持用户自己管理Router和history
+
+# 0.1.5
+> 2018.07.11
+> - 💄 去除routerFree配置项，直接由是否传入myHistory来判断用户是否需要自己管理Router和history，简化配置
