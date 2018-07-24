@@ -49,12 +49,11 @@
   }
 
   .sider-user-area{
-    height: 64px;
+    height: 48px;
     position: relative;
-    line-height: 64px;
+    line-height: 48px;
     padding-left: (80px - 32px) / 2;
     transition: all 0.3s;
-    background: #404040;
     overflow: hidden;
     .sider-avatar {
       display: inline-block;

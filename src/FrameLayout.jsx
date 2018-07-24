@@ -46,7 +46,7 @@ export default class FrameLayout extends React.Component {
 
     let res = []
     if (appObj) {
-      const allApps = (apps || getLocalStorage('apps')).authed
+      const allApps = ((apps || getLocalStorage('apps')).authed) || []
       res = allApps.filter(item => item.cname.indexOf(value) >= 0)
     }
     return res
@@ -614,7 +614,6 @@ FrameLayout.propTypes = {
   appName: PropTypes.string.isRequired,             // 平台名称
   mode: PropTypes.string,                           // 三种可选的菜单模式：sider+header;sider;header
   needFooter: PropTypes.bool,                       // 是否需要页脚
-  needAppLink: PropTypes.bool,                      // 是否需要平台导航
   needFullScreen: PropTypes.bool,                   // 是否需要全屏按钮
   menus: PropTypes.array,                           // 自定义菜单数据
   apps: PropTypes.object,                           // 自定义菜单数据
@@ -626,7 +625,6 @@ FrameLayout.propTypes = {
 FrameLayout.defaultProps = {
   mode: 'sider+header',
   needFooter: true,
-  needAppLink: true,
   needFullScreen: true,
   onLogout: function (domain) {
     window.localStorage.clear()
