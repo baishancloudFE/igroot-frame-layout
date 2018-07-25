@@ -453,7 +453,7 @@ export default class FrameLayout extends React.Component {
         {
           mode === 'sider' ? (
             <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)} placement="bottomRight">
-              <Avatar className="sider-avatar" shape="square" icon="user" style={{ marginRight: 12 }} />
+              <Avatar className="sider-avatar" shape="square" icon="user" style={{ marginRight: 18 }} />
             </Popconfirm>
           ) : null
         }

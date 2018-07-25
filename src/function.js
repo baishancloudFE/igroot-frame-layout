@@ -30,7 +30,7 @@ function setLocalStorage(key, value) {
     return false
   }
 
-  const newValue = JSON.stringify(value)
+  const newValue = JSON.stringify(value || '')
   window.localStorage.setItem(key, newValue)
 }
 
@@ -40,7 +40,7 @@ function getLocalStorage(key) {
     return false
   }
 
-  return JSON.parse(window.localStorage.getItem(key))
+  return JSON.parse(window.localStorage.getItem(key) || null)
 }
 
 
