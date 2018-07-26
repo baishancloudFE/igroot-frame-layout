@@ -627,7 +627,11 @@ FrameLayout.defaultProps = {
   needFooter: true,
   needFullScreen: true,
   onLogout: function (domain) {
-    window.localStorage.clear()
+    // window.localStorage.clear()
+    const clearItems = ['jwtToken', 'currentRoute', 'currentUrl', 'menu', 'apps', 'cname', 'apis', 'resources', 'name', 'JWT_TOKEN', 'MENU_INFO']
+    clearItems.forEach(item => {
+      window.localStorage.removeItem(item)
+    })
     window.location.assign(domain + '/account/user/logout');
   },
 }
