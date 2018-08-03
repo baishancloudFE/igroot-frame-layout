@@ -150,7 +150,7 @@ export default class FrameLayout extends React.Component {
           </Menu>
         </Sider>
 
-        <Layout>
+        <Layout id="frame-content-layout">
 
           <Header className='header'>
             <Icon
@@ -404,18 +404,18 @@ export default class FrameLayout extends React.Component {
     )
 
     let placement
-    let handleArea = <Button style={{ marginRight: 12 }} icon="link">平台导航</Button>
+    let handleArea = <Button className="frame-btn-icon" style={{ marginRight: 12 }} icon="link">平台导航</Button>
     switch (mode) {
       case 'sider+header':
         placement = "bottomLeft"
         break
       case 'header':
         placement = "bottomLeft"
-        handleArea = <Icon type="link" style={{ marginLeft: 12, fontSize: 14 }} />
+        handleArea = <Icon className="frame-btn-icon" type="link" style={{ marginLeft: 12, fontSize: 14 }} />
         break
       case 'sider':
         placement = "rightTop"
-        handleArea = <Icon type="link" style={{ marginLeft: 22, fontSize: 14 }} />
+        handleArea = <Icon className="frame-btn-icon" type="link" style={{ marginLeft: 22, fontSize: 14 }} />
         break
       default:
         placement = "bottomLeft"
@@ -453,7 +453,7 @@ export default class FrameLayout extends React.Component {
         {
           mode === 'sider' ? (
             <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)} placement="bottomRight">
-              <Avatar className="sider-avatar" shape="square" icon="user" style={{ marginRight: 18 }} />
+              <Avatar className="sider-avatar frame-btn-icon" shape="square" icon="user" style={{ marginRight: 18 }} />
             </Popconfirm>
           ) : null
         }
@@ -461,7 +461,7 @@ export default class FrameLayout extends React.Component {
         <span style={{ marginRight: 12 }}>{this.getUserName() || '未登录'}</span>
 
         <Popconfirm title='确定注销当前账号吗?' onConfirm={() => this.props.onLogout(apiDomain)} placement="bottom">
-          <Icon type='logout' style={{ display: localStorage.getItem('cname') ? 'inline-block' : 'none' }} />
+          <Icon className="frame-btn-icon" type='logout' style={{ display: localStorage.getItem('cname') ? 'inline-block' : 'none' }} />
         </Popconfirm>
       </span>
 
