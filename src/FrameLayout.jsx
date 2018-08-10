@@ -105,7 +105,7 @@ export default class FrameLayout extends React.Component {
       if (!!menu) {
         const parentMenu = this.searchParentMenu(menu, menus)
         selectedMenu = menu
-        openKey = parentMenu ? parentMenu.key : selectedKey
+        openKey = parentMenu ? parentMenu.key : menu.key
       }// 如果不存在说明用户输入的路径有误，或者没有权限，则进入平台自定义的404路由
     }
 
