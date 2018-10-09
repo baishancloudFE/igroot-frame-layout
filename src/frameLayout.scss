@@ -3,6 +3,8 @@
   height: 100%;
 }
 #frame-container-page{
+  min-height: 100%;
+
   .frame-btn-icon{
     cursor: pointer;
   }
@@ -105,6 +107,8 @@
 }
 
 #header-page{
+  min-height: 100%;
+
   .ant-layout-header {
     padding-left: 12px;
   }

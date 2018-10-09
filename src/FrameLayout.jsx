@@ -130,7 +130,7 @@ export default class FrameLayout extends React.Component {
     this.log('openKeys', openKeys, 'selectedKeys', selectedKeys)
 
     const siderHeaderContainer = (
-      <Layout style={{ height: '100%' }} id='frame-container-page'>
+      <Layout id='frame-container-page'>
 
         <Sider
           id="sider"
@@ -183,7 +183,7 @@ export default class FrameLayout extends React.Component {
       </Layout>
     )
     const siderContainer = (
-      <Layout style={{ height: '100%' }} id='frame-container-page'>
+      <Layout id='frame-container-page'>
         <Sider
           id="sider"
           collapsible
@@ -218,7 +218,7 @@ export default class FrameLayout extends React.Component {
       </Layout>
     )
     const headerContainer = (
-      <Layout style={{ height: '100%' }} id='header-page'>
+      <Layout id='header-page'>
         <Header>
           {this.renderLogo()}
           <Menu
@@ -616,7 +616,7 @@ FrameLayout.propTypes = {
   needFooter: PropTypes.bool,                       // 是否需要页脚
   needFullScreen: PropTypes.bool,                   // 是否需要全屏按钮
   menus: PropTypes.array,                           // 自定义菜单数据
-  apps: PropTypes.object,                           // 自定义菜单数据
+  apps: PropTypes.object,                           // 自定义平台数据
   userName: PropTypes.string,                       // 自定义用户名数据
   contactors: PropTypes.array,                      // 自定义联系人数据
   onLogout: PropTypes.func,                         // 处理登出逻辑
