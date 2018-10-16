@@ -25,12 +25,24 @@ const siderMenuConfig = [
     key: '/quality',
     iconType: 'solution'
   },
-  // {
-  //   name: '调度',
-  //   to: '/dispatch',
-  //   key: '/dispatch',
-  //   iconType: 'solution'
-  // },
+  {
+    name: '调度',
+    to: '/dispatch',
+    key: '/dispatch',
+    iconType: 'solution',
+    subs: [
+      {
+        name: '厂商配置列表1',
+        to: '/dispatch/SupplierManage',
+        key: '/dispatchSupplierManage',
+      },
+      {
+        name: '融合关系配置列表1',
+        to: '/dispatch/RelationConfigManage',
+        key: '/dispatchRelationConfigManage',
+      }
+    ]
+  },
   {
     name: '配置',
     to: '/config',
@@ -50,55 +62,57 @@ const siderMenuConfig = [
     ]
   }
 ]
-export default () => {
-  return (
+const domain = 'http://172.18.11.112:40080'
 
-    // <FrameLayout
-    //   apiDomain="http://test-pps.i.trpcdn.net"
-    //   logo="https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
-    //   appName="PPS"
-    //   contactors={contactors}
-    //   mode="sider+header"
-    // >
-    //   <div style={{ height: 1200, width: '100%' }}>
-    //     <Switch>
-    //       {
-    //         (JSON.parse(localStorage.getItem('menu')) || []).map(menu => (
-    //           <Route exact path={menu.to} render={() => <h1>{menu.name}</h1>} />
-    //         ))
-    //       }
-    //       <Route exact path='/403' render={() => <h1>/403</h1>} />
-    //       <Redirect exact to='/403' path='/' />
-    //     </Switch>
-    //   </div>
-    // </FrameLayout>
+export default class demo extends React.Component {
+  render() {
+    return (
+      // <FrameLayout
+      //   apiDomain="http://test-pps.i.trpcdn.net"
+      //   logo="https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
+      //   appName="PPS"
+      //   contactors={contactors}
+      //   mode="sider+header"
+      // >
+      //   <div style={{ height: 1200, width: '100%' }}>
+      //     <Switch>
+      //       {
+      //         (JSON.parse(localStorage.getItem('menu')) || []).map(menu => (
+      //           <Route exact path={menu.to} render={() => <h1>{menu.name}</h1>} />
+      //         ))
+      //       }
+      //       <Route exact path='/403' render={() => <h1>/403</h1>} />
+      //       <Redirect exact to='/403' path='/' />
+      //     </Switch>
+      //   </div>
+      // </FrameLayout>
 
-    <FrameLayout
-      apiDomain='http://172.18.11.112:11001'
-      logo="https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
-      appName="测试平台"
-      menus={siderMenuConfig}
-      apps={{}}
-      mode="header"
-      userName={
-        'fanyizhen'
-      }
-    >
-      <div style={{ height: 1200, width: '100%' }}>
-        <Switch>
-          {/* {
-            siderMenuConfig.map(menu => (
-              <Route exact path={menu.to} render={() => <h1>{menu.name}</h1>} />
-            ))
-          } */}
-          <Route exact path='/config/SupplierManage' render={() => <h1>/config/SupplierManage</h1>} />
-          <Route exact path='/config/RelationConfigManage' render={() => <h1>/config/RelationConfigManage</h1>} />
-          <Route exact path='/403' render={() => <h1>/403</h1>} />
-          <Redirect exact to='/403' path='/' />
-        </Switch>
-      </div>
-    </FrameLayout>
+      <FrameLayout
+        apiDomain={domain}
+        logo="https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png"
+        appName="测试平台"
+        menus={siderMenuConfig}
+        apps={{}}
+        mode="sider+header"
+        userName={
+          'fanyizhen'
+        }
+        allowExpandMultiMenus={true}
+      >
+        <div style={{ height: 1200, width: '100%' }}>
+          <Switch>
+            {
+              siderMenuConfig.map(menu => (
+                <Route exact path={menu.to} render={() => <h1>{menu.name}</h1>} />
+              ))
+            }
+            <Route exact path='/403' render={() => <h1>/403</h1>} />
+            <Redirect exact to='/403' path='/' />
+          </Switch>
+        </div>
+      </FrameLayout>
 
 
-  )
+    )
+  }
 }

@@ -115,3 +115,7 @@ function (domain) {
 #### 0.1.16
 > 2018.10.08
 > - 🐞 将最外层 Layout 的样式由 “height: 100%” 改为 “min-height: 100%”
+
+#### 0.1.17
+> 2018.10.16
+> - 🐞 增加配置项：allowExpandMultiMenus，默认值为 false，意为允许展开多个父级菜单

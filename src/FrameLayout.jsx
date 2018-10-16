@@ -24,110 +24,29 @@ export default class FrameLayout extends React.Component {
     }
   }
 
-  getHistory = () => {
-    const { myHistory } = this.props
-    return myHistory || createHashHistory()
-  }
-
-  // 获取菜单数据
-  getMenu = () => {
-    const { menus } = this.props
-    let res = menus || getLocalStorage('menu')
-    if (!this.checkMenuFormat(res)) {
-      res = this.transferMenus(res)
-    }
-    return res
-  }
-
-  // 获取导航所需的平台链接数据
-  getAppLinks = (value = "") => {
-    const { apps } = this.props
-    const appObj = apps || getLocalStorage('apps')
-
-    let res = []
-    if (appObj) {
-      const allApps = ((apps || getLocalStorage('apps')).authed) || []
-      res = allApps.filter(item => item.cname.indexOf(value) >= 0)
-    }
-    return res
-  }
-
-  // 获取用户名数据
-  getUserName = () => {
-    const { userName } = this.props
-    const res = userName || getLocalStorage('cname')
-
-    return res
-  }
-
-  // 获得去除参数信息后的菜单对象（例如：/a/b/:id）
-  getRouteWithNoNumber = () => {
-    const { location: { hash } } = window
-
-    const routeItems = hash.split('/')
-    const newRouteItems = routeItems.filter(item => isNaN(item) && item !== '#')
-
-    let route = '/' + newRouteItems.join('/')
-
-    return route
-  }
-
   componentWillMount() {
-    this.log('componentWillMount')
+    this.GoBackToPrePage()
+
     const menus = this.getMenu()
-
-    this.log('menus', menus)
-
     this.historyListen(menus)
 
-    const initialRoute = getLocalStorage('currentRoute')
-    if (initialRoute) {
-      this.hashHistory.push(initialRoute)
-      localStorage.removeItem('currentRoute')
-    }
+    const route = this.getRouteWithNoNumber()// 初始得到的路由信息
+    const selectedMenu = this.getSelectMenu(menus, route)
 
-    // 初始得到的路由信息
-    let route = this.getRouteWithNoNumber()
-
-    this.log('初始route', route)
-
-
-    let selectedMenu, openKey
-    // 默认路径如果为／，则设置第一个叶子菜单为默认路由
-    if (!route || route === '/') {
-      const firstChildMenu = this.getFlatMenus(menus[0])[0]
-      this.log('初始route为空，找到的menu是', firstChildMenu)
-      openKey = menus[0].key
-      selectedMenu = firstChildMenu
-    } else {// 用户手动输入一个路由
-      let menu = this.searchMenuByPath(menus, route)
-      this.log('初始route不为空，找到的menu是', menu)
-      if (!!menu) {
-        const parentMenu = this.searchParentMenu(menu, menus)
-        selectedMenu = menu
-        openKey = parentMenu ? parentMenu.key : menu.key
-      }// 如果不存在说明用户输入的路径有误，或者没有权限，则进入平台自定义的404路由
-    }
-
-    // 如果页面初始化时的浏览器路径可以找到
     if (selectedMenu) {
-      if (selectedMenu.to !== route) {
-        this.hashHistory.push(selectedMenu.to)
-      }
+      this.gotoCurrentMenuPage(selectedMenu, route)
 
-      document.title = this.props.appName + '-' + selectedMenu.name
+      const openKey = this.getOpenKey(menus, selectedMenu)
       this.setState({
         openKeys: [openKey],
         selectedKeys: [selectedMenu.key]
-      })
+      }, () => this.log('openKeys', this.state.openKeys, 'selectedKeys', this.state.selectedKeys))
     }
   }
 
   render() {
     const { selectedKeys, collapsed, openKeys } = this.state
     const { mode, myHistory } = this.props
-
-    this.log('openKeys', openKeys, 'selectedKeys', selectedKeys)
 
     const siderHeaderContainer = (
       <Layout id='frame-container-page'>
@@ -267,8 +186,13 @@ export default class FrameLayout extends React.Component {
 
   // 处理父级菜单展开
   handleOpenChange = (openKeys) => {
+    let newOpenKeys = [openKeys[openKeys.length - 1]]
+    if (this.props.allowExpandMultiMenus) {
+      newOpenKeys = [...openKeys]
+    }
+
     this.setState({
-      openKeys: [openKeys[openKeys.length - 1]]
+      openKeys: newOpenKeys
     })
   }
 
@@ -286,9 +210,13 @@ export default class FrameLayout extends React.Component {
           this.log(!!currentMenu && !!parentMenu && currentMenu.key !== this.state.selectedKeys[0])
           if (!!parentMenu && currentMenu.key !== this.state.selectedKeys[0]) {
 
+            let newOpenKeys = [parentMenu.key]
+            if (this.props.allowExpandMultiMenus) {
+              newOpenKeys = [...this.state.openKeys, parentMenu.key]
+            }
             this.setState({
               selectedKeys: [currentMenu.key],
-              openKeys: [parentMenu.key]
+              openKeys: newOpenKeys
             })
           }
         }
@@ -333,6 +261,105 @@ export default class FrameLayout extends React.Component {
           </SubMenu>
         )
     })
+  }
+
+  getHistory = () => {
+    const { myHistory } = this.props
+    return myHistory || createHashHistory()
+  }
+
+  // 获取菜单数据
+  getMenu = () => {
+    const { menus } = this.props
+    let res = menus || getLocalStorage('menu')
+    if (!this.checkMenuFormat(res)) {
+      res = this.transferMenus(res)
+    }
+    this.log('menus', res)
+    return res
+  }
+
+  // 获取导航所需的平台链接数据
+  getAppLinks = (value = "") => {
+    const { apps } = this.props
+    const appObj = apps || getLocalStorage('apps')
+
+    let res = []
+    if (appObj) {
+      const allApps = ((apps || getLocalStorage('apps')).authed) || []
+      res = allApps.filter(item => item.cname.indexOf(value) >= 0)
+    }
+    return res
+  }
+
+  // 获取用户名数据
+  getUserName = () => {
+    const { userName } = this.props
+    const res = userName || getLocalStorage('cname')
+
+    return res
+  }
+
+  /**
+   * 恢复之前打开的页面
+   */
+  GoBackToPrePage = () => {
+    const initialRoute = getLocalStorage('currentRoute')
+    if (initialRoute) {
+      this.hashHistory.push(initialRoute)
+      localStorage.removeItem('currentRoute')
+    }
+  }
+
+  /**
+   * 获得去除参数信息后的菜单对象（例如：/a/b/:id）
+   */
+  getRouteWithNoNumber = () => {
+    const { location: { hash } } = window
+    const hashCopy = hash
+
+    const res = hashCopy.replace(/(\/\d+)|#/g, '')
+    this.log('初始route', res)
+    return res
+  }
+
+  /**
+   * 将页面定位为当前的菜单对应的页面
+   */
+  gotoCurrentMenuPage = (selectedMenu, route) => {
+    document.title = this.props.appName + '-' + selectedMenu.name
+    if (selectedMenu.to !== route) {
+      this.hashHistory.push(selectedMenu.to)
+    }
+  }
+
+  /**
+   * 获取 openKey
+   */
+  getOpenKey = (menus, selectedMenu) => {
+    const parentMenu = this.searchParentMenu(selectedMenu, menus)
+    return parentMenu ? parentMenu.key : selectedMenu.key
+  }
+
+  /**
+   * 获取 当前菜单
+   */
+  getSelectMenu = (menus, route) => {
+    let selectedMenu
+    // 默认路径如果为／，则设置第一个叶子菜单为默认路由
+    if (!route || route === '/') {
+      const firstChildMenu = this.getFlattenMenus(menus[0])[0]
+      this.log('初始route为空，找到的menu是', firstChildMenu)
+      selectedMenu = firstChildMenu
+    } else {// 用户手动输入一个路由
+      let menu = this.searchMenuByPath(menus, route)
+      //TODO: 如果用户输入的是父级组件，当前没有处理这种情况
+      this.log('初始route不为空，找到的menu是', menu)
+      if (!!menu) {
+        selectedMenu = menu
+      }// 如果不存在说明用户输入的路径有误，或者没有权限，则进入平台自定义的404路由
+    }
+    return selectedMenu
   }
 
   // 显示搜索平台的搜索框
@@ -536,11 +563,11 @@ export default class FrameLayout extends React.Component {
   }
 
   // 将所有菜单平铺
-  getFlatMenus = (menu) => {
+  getFlattenMenus = (menu) => {
     let res = []
     if (!!menu.subs && menu.subs.length > 0) {
       menu.subs.forEach(sub => {
-        res = [...res, ...this.getFlatMenus(sub)]
+        res = [...res, ...this.getFlattenMenus(sub)]
       })
     } else {
       res.push(menu)
@@ -549,13 +576,15 @@ export default class FrameLayout extends React.Component {
   }
 
   // 获取某个菜单的最上级菜单
-  searchParentMenu = (menu, menus) => {
+  searchParentMenu = (menu, menus = []) => {
     let res = []
-    menus.forEach(item => {
-      const childMenus = this.getFlatMenus(item)
+    menus.find(item => {
+      const childMenus = this.getFlattenMenus(item)
       if (childMenus.some(child => child.to === menu.to)) {
         res.push(item)
+        return true
       }
+      return false
     })
     return res[0]
   }
@@ -594,7 +623,7 @@ export default class FrameLayout extends React.Component {
 
   // 检测菜单的格式：是否都以 '/' 开头
   checkMenuFormat = (menus) => {
-    const flatMenus = this.getFlatMenus(menus)[0]
+    const flatMenus = this.getFlattenMenus(menus)[0]
     const isValidType = flatMenus.every(item => `${item.to}`.slice(0, 1) === '/')
     return isValidType
   }
@@ -603,7 +632,7 @@ export default class FrameLayout extends React.Component {
   log = (...content) => {
     const displayLog = getLocalStorage('displayLog')
     if (displayLog) {
-      console.log(...content)
+      console.log('布局组件LOG：', ...content)
     }
   }
 }
@@ -621,17 +650,18 @@ FrameLayout.propTypes = {
   contactors: PropTypes.array,                      // 自定义联系人数据
   onLogout: PropTypes.func,                         // 处理登出逻辑
   myHistory: PropTypes.object,                      // 自定义 history 对象
+  allowExpandMultiMenus: PropTypes.bool,
 }
 FrameLayout.defaultProps = {
   mode: 'sider+header',
   needFooter: true,
   needFullScreen: true,
   onLogout: function (domain) {
-    // window.localStorage.clear()
     const clearItems = ['jwtToken', 'currentRoute', 'currentUrl', 'menu', 'apps', 'cname', 'apis', 'resources', 'name', 'JWT_TOKEN', 'MENU_INFO']
     clearItems.forEach(item => {
       window.localStorage.removeItem(item)
     })
     window.location.assign(domain + '/account/user/logout');
   },
+  allowExpandMultiMenus: false,
 }
