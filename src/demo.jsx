@@ -94,9 +94,7 @@ export default class demo extends React.Component {
         menus={siderMenuConfig}
         apps={{}}
         mode="sider+header"
-        userName={
-          'fanyizhen'
-        }
+        userName='fanyizhen'
         allowExpandMultiMenus={true}
       >
         <div style={{ height: 1200, width: '100%' }}>
@@ -106,8 +104,7 @@ export default class demo extends React.Component {
                 <Route exact path={menu.to} render={() => <h1>{menu.name}</h1>} />
               ))
             }
-            <Route exact path='/403' render={() => <h1>/403</h1>} />
-            <Redirect exact to='/403' path='/' />
+            <Route exact path={"/quality/:id"} render={() => <h1>dasdasda</h1>} />
           </Switch>
         </div>
       </FrameLayout>

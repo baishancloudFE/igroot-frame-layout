@@ -14,6 +14,7 @@ export default class FrameLayout extends React.Component {
     super(props)
 
     this.hashHistory = this.getHistory()
+    this.menus = this.getMenu()
 
     this.state = {
       selectedKeys: [],
@@ -24,24 +25,58 @@ export default class FrameLayout extends React.Component {
     }
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.GoBackToPrePage()
 
-    const menus = this.getMenu()
-    this.historyListen(menus)
+    this.listenHistory()
 
-    const route = this.getRouteWithNoNumber()// 初始得到的路由信息
-    const selectedMenu = this.getSelectMenu(menus, route)
+    const menuPathCorrectted = this.correctMenuPath(window.location.hash)
+    const route = this.getRealRoute(menuPathCorrectted)// 初始得到的路由信息
+    const selectedMenu = this.getSelectMenu(route)
 
     if (selectedMenu) {
-      this.gotoCurrentMenuPage(selectedMenu, route)
+      this.setDocumentTitle(selectedMenu.name)
+      this.redirectCurrentMenuPage(selectedMenu, route)
 
-      const openKey = this.getOpenKey(menus, selectedMenu)
+      const openKey = this.getOpenKeyBySelectedMenu(selectedMenu)
       this.setState({
         openKeys: [openKey],
         selectedKeys: [selectedMenu.key]
       }, () => this.log('openKeys', this.state.openKeys, 'selectedKeys', this.state.selectedKeys))
+    } else {
+      console.error(`无法根据您的路由为您匹配到正确的菜单，请检查路由 ${window.location.hash} 是否正确！`)
     }
+  }
+
+  // 监听浏览器地址栏变化，并联动菜单的选中状态
+  listenHistory = () => {
+    this.log('hashHistory开始监听！')
+    this.hashHistory.listen((location) => {
+      this.log('hashHistory.listen（pathname）：', location.pathname)
+
+      if (location.pathname !== '/') {
+        let currentMenu = this.searchMenuByPath(this.menus, this.correctMenuPath(window.location.hash))
+        this.log('currentMenu', currentMenu)
+        if (!!currentMenu) {
+          let parentMenu = this.searchParentMenu(currentMenu, this.menus)
+          this.log('parentMenu', parentMenu)
+          document.title = this.props.appName + '-' + currentMenu.name
+          this.log(!!currentMenu && !!parentMenu && currentMenu.key !== this.state.selectedKeys[0])
+          if (!!parentMenu && currentMenu.key !== this.state.selectedKeys[0]) {
+
+            let newOpenKeys = [parentMenu.key]
+            if (this.props.allowExpandMultiMenus) {
+              newOpenKeys = [...this.state.openKeys, parentMenu.key]
+            }
+            this.setState({
+              selectedKeys: [currentMenu.key],
+              openKeys: newOpenKeys
+            })
+          }
+        }
+      }
+
+    })
   }
 
   render() {
@@ -127,7 +162,7 @@ export default class FrameLayout extends React.Component {
           </Menu>
         </Sider>
 
-        <Layout>
+        <Layout id="frame-content-layout">
           <Content style={{ margin: '12px 12px 0', height: '100%' }}>
             {this.props.children}
           </Content>
@@ -196,39 +231,11 @@ export default class FrameLayout extends React.Component {
     })
   }
 
-  // 监听浏览器地址栏变化，并联动菜单的选中状态
-  historyListen = (menus) => {
-    this.hashHistory.listen((location) => {
-      this.log('hashHistory.listen', location.pathname)
-      if (location.pathname !== '/') {
-        let currentMenu = this.searchMenuByPath(menus, location.pathname)
-        this.log('currentMenu', currentMenu)
-        if (!!currentMenu) {
-          let parentMenu = this.searchParentMenu(currentMenu, menus)
-          this.log('parentMenu', parentMenu)
-          document.title = this.props.appName + '-' + currentMenu.name
-          this.log(!!currentMenu && !!parentMenu && currentMenu.key !== this.state.selectedKeys[0])
-          if (!!parentMenu && currentMenu.key !== this.state.selectedKeys[0]) {
 
-            let newOpenKeys = [parentMenu.key]
-            if (this.props.allowExpandMultiMenus) {
-              newOpenKeys = [...this.state.openKeys, parentMenu.key]
-            }
-            this.setState({
-              selectedKeys: [currentMenu.key],
-              openKeys: newOpenKeys
-            })
-          }
-        }
-      }
-
-    })
-  }
 
   // 渲染菜单
   renderMenu = () => {
-    const menus = this.getMenu()
-    return menus.map(item => {
+    return this.menus.map(item => {
       if (!item.subs)
         return (
           <Item key={item.key}>
@@ -271,12 +278,10 @@ export default class FrameLayout extends React.Component {
   // 获取菜单数据
   getMenu = () => {
     const { menus } = this.props
-    let res = menus || getLocalStorage('menu')
-    if (!this.checkMenuFormat(res)) {
-      res = this.transferMenus(res)
-    }
-    this.log('menus', res)
-    return res
+    let menuDatas = menus || getLocalStorage('menu')
+    menuDatas = this.correctMenus(menuDatas)
+    this.log('menus', menuDatas)
+    return menuDatas
   }
 
   // 获取导航所需的平台链接数据
@@ -305,7 +310,9 @@ export default class FrameLayout extends React.Component {
    */
   GoBackToPrePage = () => {
     const initialRoute = getLocalStorage('currentRoute')
+
     if (initialRoute) {
+      this.log('定位到之前的页面', initialRoute)
       this.hashHistory.push(initialRoute)
       localStorage.removeItem('currentRoute')
     }
@@ -314,20 +321,33 @@ export default class FrameLayout extends React.Component {
   /**
    * 获得去除参数信息后的菜单对象（例如：/a/b/:id）
    */
-  getRouteWithNoNumber = () => {
-    const { location: { hash } } = window
-    const hashCopy = hash
+  getRouteWithNoNumber = (pathname) => {
+    const pathnameCopy = pathname
 
-    const res = hashCopy.replace(/(\/\d+)|#/g, '')
+    const res = pathnameCopy.replace(/(\/\d+)|#/g, '')
     this.log('初始route', res)
     return res
   }
 
   /**
+   * 获得路由，有可能会带参数（例如：/a/b/:id）
+   */
+  getRealRoute = (pathname) => {
+    const pathnameCopy = pathname
+
+    const res = pathnameCopy.replace(/#/g, '')
+    this.log('初始route', res)
+    return res
+  }
+
+  setDocumentTitle = (selectedMenuName) => {
+    document.title = this.props.appName + '-' + selectedMenuName
+  }
+
+  /**
    * 将页面定位为当前的菜单对应的页面
    */
-  gotoCurrentMenuPage = (selectedMenu, route) => {
-    document.title = this.props.appName + '-' + selectedMenu.name
+  redirectCurrentMenuPage = (selectedMenu, route) => {
     if (selectedMenu.to !== route) {
       this.hashHistory.push(selectedMenu.to)
     }
@@ -336,23 +356,23 @@ export default class FrameLayout extends React.Component {
   /**
    * 获取 openKey
    */
-  getOpenKey = (menus, selectedMenu) => {
-    const parentMenu = this.searchParentMenu(selectedMenu, menus)
+  getOpenKeyBySelectedMenu = (selectedMenu) => {
+    const parentMenu = this.searchParentMenu(selectedMenu, this.menus)
     return parentMenu ? parentMenu.key : selectedMenu.key
   }
 
   /**
    * 获取 当前菜单
    */
-  getSelectMenu = (menus, route) => {
+  getSelectMenu = (route) => {
     let selectedMenu
     // 默认路径如果为／，则设置第一个叶子菜单为默认路由
     if (!route || route === '/') {
-      const firstChildMenu = this.getFlattenMenus(menus[0])[0]
+      const firstChildMenu = this.getFlattenMenus(this.menus[0])[0]
       this.log('初始route为空，找到的menu是', firstChildMenu)
       selectedMenu = firstChildMenu
     } else {// 用户手动输入一个路由
-      let menu = this.searchMenuByPath(menus, route)
+      let menu = this.searchMenuByPath(this.menus, route)
       //TODO: 如果用户输入的是父级组件，当前没有处理这种情况
       this.log('初始route不为空，找到的menu是', menu)
       if (!!menu) {
@@ -590,42 +610,55 @@ export default class FrameLayout extends React.Component {
   }
 
   // 根据 路径名过滤出菜单
-  searchMenuByPath = (allMenus, pathname) => {
+  searchMenuByPath = (allMenus, pathName) => {
     let res
-    allMenus.forEach(menu => {
-      if (menu.to === pathname) {
+    allMenus.find(menu => {
+      if (menu.to === pathName) {
         res = menu
-      } else if (!res && menu.subs && menu.subs.length > 0) {
-        const childRes = this.searchMenuByPath(menu.subs, pathname)
-        if (childRes) {
-          res = childRes
+        return true
+      } else {
+        if (menu.subs && menu.subs.length > 0) {
+          const childRes = this.searchMenuByPath(menu.subs, pathName)
+          if (childRes) {
+            res = childRes
+            return true
+          }
         }
       }
+      return false
     })
     return res
   }
 
-  // 循环遍历菜单，在每个菜单路径前面加上‘／’
-  transferMenus = (allMenus) => {
+  /**
+   * 修正菜单路径：确保都只以一个 '/' 开头
+   */
+  correctMenuPath = (menuHashPath) => {
+    let menuPathCopy = menuHashPath.replace('#', '')
+    if (!/(^\/{1})+(?!\/)/.test(menuPathCopy)) {
+      menuPathCopy = menuPathCopy.replace(/\/+/, "/")
+      if (!/^\//.test(menuPathCopy)) {
+        menuPathCopy = '/' + menuPathCopy
+      }
+    }
+    return menuPathCopy
+  }
+
+
+  // 循环遍历菜单，确保每个菜单路径前面都有‘／’
+  correctMenus = (allMenus) => {
     return allMenus.map(menu => {
-      menu.to = '/' + menu.to
+      menu.to = this.correctMenuPath(menu.to)
       menu.key = menu.to
 
       if (menu.subs && menu.subs.length > 0) {
-        const childRes = this.transferMenus(menu.subs)
+        const childRes = this.correctMenus(menu.subs)
         if (childRes) {
           menu.subs = childRes
         }
       }
       return menu
     })
-  }
-
-  // 检测菜单的格式：是否都以 '/' 开头
-  checkMenuFormat = (menus) => {
-    const flatMenus = this.getFlattenMenus(menus)[0]
-    const isValidType = flatMenus.every(item => `${item.to}`.slice(0, 1) === '/')
-    return isValidType
   }
 
   // 打印调试日志的开关（只有在LocalStorage中把 displayLog 设置为 true 才可以查看日志）
