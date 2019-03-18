@@ -4,6 +4,6 @@
   "builder": "igroot-business-component-dev-builder",
   "options": {
     "domain": "localhost",
-    "port": 8087
+    "port": 1212
   }
 }

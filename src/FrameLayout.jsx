@@ -82,10 +82,15 @@ export default class FrameLayout extends React.Component {
   render() {
     const { selectedKeys, collapsed, openKeys } = this.state
     const { mode, myHistory } = this.props
+    const rootContainer = document.getElementById('frame-container-page')
+    const menuStyle = {
+      width: '100%',
+      height: rootContainer ? (rootContainer.clientHeight - 100) : 'auto',
+      overflowY: 'scroll'
+    }
 
     const siderHeaderContainer = (
       <Layout id='frame-container-page'>
-
         <Sider
           id="sider"
           trigger={null}
@@ -98,14 +103,13 @@ export default class FrameLayout extends React.Component {
             openKeys={openKeys}
             onOpenChange={this.handleOpenChange}
             selectedKeys={selectedKeys}
-            style={{ width: '100%' }}
+            style={menuStyle}
           >
             {this.renderMenu()}
           </Menu>
         </Sider>
 
         <Layout id="frame-content-layout">
-
           <Header className='header'>
             <Icon
               className="trigger"
@@ -156,7 +160,7 @@ export default class FrameLayout extends React.Component {
             openKeys={openKeys}
             onOpenChange={this.handleOpenChange}
             selectedKeys={selectedKeys}
-            style={{ width: '100%' }}
+            style={menuStyle}
           >
             {this.renderMenu()}
           </Menu>
