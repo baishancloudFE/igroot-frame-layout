@@ -83,9 +83,10 @@ export default class FrameLayout extends React.Component {
     const { selectedKeys, collapsed, openKeys } = this.state
     const { mode, myHistory } = this.props
     const rootContainer = document.getElementById('frame-container-page')
+    const height = document.body.clientHeight > rootContainer.clientHeight ? rootContainer.clientHeight : document.body.clientHeight
     const menuStyle = {
       width: '100%',
-      height: rootContainer ? (rootContainer.clientHeight - 100) : 'auto',
+      height: rootContainer ? (height - 100) : 'auto',
       overflowY: 'scroll'
     }
 
