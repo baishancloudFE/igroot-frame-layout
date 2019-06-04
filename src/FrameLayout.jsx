@@ -90,7 +90,9 @@ export default class FrameLayout extends React.Component {
           id="sider"
           trigger={null}
           collapsible
-          collapsed={collapsed}>
+          collapsed={collapsed}
+          {...this.props}
+          >
           {this.renderLogo()}
           <Menu
             theme='dark'
@@ -142,7 +144,9 @@ export default class FrameLayout extends React.Component {
           id="sider"
           collapsible
           collapsed={collapsed}
-          onCollapse={this.onCollapse}>
+          onCollapse={this.onCollapse}
+          {...this.props}
+          >
           {this.renderLogo()}
           <div className="sider-user-area">
             <span className="sider-user-name">
